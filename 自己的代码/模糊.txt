@@ -1,0 +1,73 @@
+#include <opencv2/core/core.hpp> 
+#include <opencv2/imgcodecs.hpp> 
+#include <opencv2/opencv.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <iostream>
+
+using namespace cv;
+using namespace std;
+
+int main(void)
+{
+	Mat z ,y;
+	Mat mohu;
+	mohu = imread("mohu.jpg");
+	y = imread("y.jpeg");
+	z = imread("z.jpeg");
+	namedWindow("z", CV_WINDOW_AUTOSIZE);
+	namedWindow("z", CV_WINDOW_AUTOSIZE);
+	namedWindow("dst", CV_WINDOW_AUTOSIZE);
+	//imshow("z", z);
+	//imshow("y", y);
+	int cols = z.cols * 2;
+	int rows = z.rows;
+	
+	Mat dst = Mat::zeros(Size((z.cols+y.cols+10),rows),z.type());
+	
+	for (int row = 0;row < rows;row++)
+	{
+		for (int col = 0;col < y.cols;col++)
+		{
+			dst.at<Vec3b>(row, col)[0] = y.at<Vec3b>(row, col)[0];
+			dst.at<Vec3b>(row, col)[1] = y.at<Vec3b>(row, col)[1];
+			dst.at<Vec3b>(row, col)[2] = y.at<Vec3b>(row, col)[2];
+			dst.at<Vec3b>(row, col + y.cols)[0] = z.at<Vec3b>(row, col)[0];
+			dst.at<Vec3b>(row, col + y.cols)[1] = z.at<Vec3b>(row, col)[1];
+			dst.at<Vec3b>(row, col + y.cols)[2] = z.at<Vec3b>(row, col)[2];
+		}
+		
+	}
+	
+	
+	//imshow("dst", dst);
+	imshow("z", mohu);
+	/*以上是输入的图*/
+	/*均值模糊*/
+	Mat junzhi;
+	blur(z, junzhi, Size(5, 5), Point(-1, -1));
+	namedWindow("junzhi", CV_WINDOW_AUTOSIZE);
+	imshow("junzhi", junzhi);
+	/*高斯模糊*/
+	Mat gaosi;
+	GaussianBlur(z, gaosi, Size(5, 5), 2, 2);
+	namedWindow("gaosi", CV_WINDOW_AUTOSIZE);
+	imshow("gaosi", gaosi);
+	/*中值模糊*/
+	Mat zhongzhi;
+	medianBlur(z,zhongzhi, 5);
+	namedWindow("zhongzhi", CV_WINDOW_AUTOSIZE);
+	imshow("zhongzhi", zhongzhi);
+	/*双边模糊*/
+	Mat shuangbian;
+	bilateralFilter(mohu, shuangbian, 15, 150,3);
+	namedWindow("shuangbian", CV_WINDOW_AUTOSIZE);
+	imshow("shuangbian", shuangbian);
+	/*最终*/
+	Mat zuizhong;
+	Mat k = (Mat_<char>(3, 3) << 0, -1, 0, -1, 5, -1, 0, -1, 0);
+	filter2D(shuangbian, zuizhong, shuangbian.depth(), k);
+	namedWindow("zuizhong", CV_WINDOW_AUTOSIZE);
+	imshow("zuizhong",zuizhong);
+	waitKey(0);
+	return 0;
+}
