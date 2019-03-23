@@ -1,0 +1,66 @@
+#include <opencv2/opencv.hpp> 
+#include <iostream> 
+using namespace cv;
+
+
+//求梯度
+
+int main(int argc, char** argv) 
+{
+	Mat src, dst;
+	src = imread("z.jpeg");
+	if (!src.data) {
+		printf("could not load image...\n");
+		return -1;
+	}
+	namedWindow("input image", CV_WINDOW_AUTOSIZE);
+	imshow("input image", src);//显示输入图片
+
+	//先高斯平滑
+	Mat gaosi;
+	GaussianBlur(src, gaosi, Size(3, 3), 0, 0);
+	//转成灰度图片
+	Mat gray;
+	namedWindow("gray", CV_WINDOW_AUTOSIZE);
+	cvtColor(gaosi, gray, CV_BGR2GRAY);
+	imshow("gray", gray);
+	//求梯度(Scharr)
+	Mat x, y;
+	//Scharr(gray, x, CV_16S, 1, 0);
+	//Scharr(gray, y, CV_16S, 0, 1);
+	//求梯度(Sobel)
+	Sobel(gray, x, CV_16S, 1, 0, 3);//BORDER_DEFAULT会出错
+	Sobel(gray, y, CV_16S, 0, 1, 3);
+	convertScaleAbs(x, x);
+	convertScaleAbs(y, y);//变正数
+	namedWindow("x", CV_WINDOW_AUTOSIZE);
+	namedWindow("y", CV_WINDOW_AUTOSIZE);
+	imshow("x", x);
+	imshow("y", y);
+	
+	addWeighted(x, 0.5, y, 0.5, 0, dst);//自动相加
+	namedWindow("output_zidong", CV_WINDOW_AUTOSIZE);
+	imshow("output_zidong", dst);
+	/*手动相加*/
+	int cols = gray.cols;
+	int rows = gray.rows;
+	Mat dst1 = Mat(gray.size(), gray.type());//直接用dst会报错 应该要开始没像素后面才能赋值
+	for (int row = 0;row < rows;row++)
+	{
+		for (int col = 0;col < cols; col++)
+		{
+			int g_x = x.at<uchar>(row, col);
+			int g_y = y.at<uchar>(row, col);
+			int g_xy = g_x + g_y;
+			dst1.at<uchar>(row, col) = saturate_cast<uchar>(g_xy);//保证像素在0，255并写道dst中
+		}
+	}
+	
+	/*手动相加*/
+	namedWindow("output_shoudong", CV_WINDOW_AUTOSIZE);
+	imshow("output_shoudong", dst1);
+
+	waitKey(0);
+	return 0;
+}
+
